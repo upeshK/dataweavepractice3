@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <flow name="dataweave3Flow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/advdw" doc:name="HTTP"/>
+        <dw:transform-message doc:name="Transform Message" metadata:id="8667401d-7395-4e24-97e4-36be09b99e74">
+            <dw:input-payload doc:sample="H:\MULE_REQ_RES_FILES\priceInput.xml" mimeType="application/xml"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/dw
+%var conversionRate=3.156
+---
+
+priceList : payload.prices pluck (value,key)-> {
+	(key ++ "_dollar") : value as :number,
+	(key ++ "_SLR") :value * conversionRate as :number
+	
+	//"sss":payload.prices.basic mapObject $
+}]]></dw:set-payload>
+        </dw:transform-message>
+    </flow>
+    <flow name="dataweave3Flow1">
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+
+%var priceTiers="<?xml version='1.0' encoding='UTF-8'?>
+ <prices>
+ <basic>9.99</basic>
+ <premium>53</premium>
+ <vip>398.99</vip>
+ </prices>"
+ 
+%var payload= read(priceTiers,"application/xml")
+%var conversionRate=12.45 
+%type currency= :number {format :"##.##"}
+
+---
+
+( using (keys=payload.prices pluck $$)(
+	payload.prices map {
+		("price-category-" ++ keys[$$]):{
+			("price" ++ "_DOller" ):$,
+			("price" ++ "_Local") : ($ * conversionRate) as :currency
+		}
+		
+	}
+))
+
+	
+
+	
+	
+]]></dw:set-payload>
+        </dw:transform-message>
+    </flow>
+    <flow name="dataweave3Flow2">
+        <dw:transform-message doc:name="Transform Message">
+            <dw:input-payload doc:sample="sample_data\json.json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+%var arr= [{number : 10, times : 8},{number : 2, times : 5},{number : 7, times : 7},{number : 6, times : 3},{number : 4, times : 7}]
+---
+//[10,40,60] reduce $$+$
+
+//sum: {
+//	number: arr reduce ((val,acc=0) -> acc + val.number),
+//	times: arr reduce ((val,acc=0) -> acc + val.times),
+//	total : arr reduce ((val,acc=0)-> acc + val.times) 
+//	
+//	}
+
+//payload reduce ((val,acc={}) -> acc ++ {(val.ClubID):val.price})
+
+//payload reduce ((val,acc={})-> acc ++ {(val.ClubID): val ++ "ww":"5"})
+
+payload map {
+	($.ClubID):$ mapObject { ($$):$ } 
+}]]></dw:set-payload>
+        </dw:transform-message>
+    </flow>
+</mule>

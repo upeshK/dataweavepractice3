@@ -1,0 +1,17 @@
+[
+{
+"ClubID": "A1234",
+"Name": "Barcelona FC",
+"Country": "Spain",
+"price": "30.00"
+}, {
+"ClubID": "B1234",
+"Name": "Chelsea FC",
+"Country": "Spain",
+"price": "56.76"
+}, {
+"ClubID": "C1234",
+"Name": "Arsenal FC",
+"Country": "Englanda",
+"price" : "100.67"
+}]
